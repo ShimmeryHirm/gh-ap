@@ -1,0 +1,10 @@
+.env
+.idea/
+.venv/
+.virtualenv/
+/shelf/
+/workspace.xml
+__pycache__/
+venv/
+tests/
+gh-ap/repos.txt
