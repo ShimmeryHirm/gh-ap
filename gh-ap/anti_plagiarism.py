@@ -1,11 +1,10 @@
 import difflib
+import re
 from typing import List, Iterable
 
 import requests
 
 from config import IGNORE_FOLDER
-
-raw_data = {}
 
 
 class Repository:
@@ -16,7 +15,6 @@ class Repository:
 class File:
     path: str
     content: str
-    url: str
 
 
 class AntiPlagiarism:
@@ -29,12 +27,11 @@ class AntiPlagiarism:
         for url in urls:
             url = url.replace("/blob", "").replace("//github", "//raw.githubusercontent")
             r = requests.get(url, headers={"Authorization": f"Bearer {self.auth_token}"})
-            raw_data[url] = r.text
             res.append(r.text)
 
         return res
 
-    def get_repo_files(self, repo: Repository, extension: str = '.c') -> List[File]:
+    def get_repo_files(self, repo: Repository, extension_regex: str = r'^.*\.(c|h|cpp)$') -> List[File]:
 
         r = requests.get(f"https://api.github.com/repos/{repo.path}/git/trees/{repo.default_branch}?recursive=1",
                          headers={"Authorization": f"Bearer {self.auth_token}"}).json()
@@ -42,23 +39,15 @@ class AntiPlagiarism:
         res = []
         for file in r['tree']:
 
-            if file['mode'] == '040000':
-                continue
-
-            t = False
-            for ign in IGNORE_FOLDER:
-                if ign in file['path']:
-                    t = True
-            if t:
+            if any([ign in file['path'] for ign in IGNORE_FOLDER]) or file['mode'] == '040000':
                 continue
 
             f = File()
             f.path = file['path']
 
-            if extension in f.path:
+            if re.search(extension_regex, f.path):
                 url = f'https://raw.githubusercontent.com/{repo.path}/{repo.default_branch}/{file["path"]}'
                 f.content = self.get_raw((url,))[0]
-                f.url = url
                 res.append(f)
 
         return res

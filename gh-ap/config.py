@@ -3,6 +3,8 @@ from environs import Env
 env = Env()
 env.read_env()
 
+TOKEN = env.str('GITHUB_TOKEN')
+
 IGNORE_FOLDER = ("Debug", 'vs', '.sln', '.vcx', 'cmake-build')
 MIN_DIFF = 80
-TOKEN = env.str('GITHUB_TOKEN')
+MAX_THREADS = 50
